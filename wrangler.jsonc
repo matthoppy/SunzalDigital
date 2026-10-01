@@ -11,16 +11,6 @@
     "run_worker_first": true
   },
 
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "seo-dashboard",
-      // Replace with the id printed by `npx wrangler d1 create seo-dashboard`
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "migrations"
-    }
-  ],
-
   "triggers": {
     "crons": [
       "*/10 * * * *", // uptime checks for every site
@@ -29,13 +19,18 @@
   },
 
   "vars": {
+    // Your Supabase project URL, e.g. "https://abcdefghijkl.supabase.co"
+    "SUPABASE_URL": "",
     // Public URL of this worker, used for DataForSEO result callbacks,
     // e.g. "https://sunzal-seo-dashboard.<you>.workers.dev"
     "PUBLIC_URL": "",
-    "SITES_PER_RUN": "2",
+    "SITES_PER_RUN": "1",
     "PAGE_CHECKS_PER_SITE": "5",
     "RANK_CHECK_INTERVAL_DAYS": "1",
     "RANK_DEPTH": "30",
-    "RANK_LANGUAGE_CODE": "en"
+    "RANK_LANGUAGE_CODE": "en",
+    "INDEX_CHECKS_PER_SITE": "5",
+    // Write a fresh AI summary after each daily sync (needs ANTHROPIC_API_KEY)
+    "DAILY_AI_SUMMARY": "true"
   }
 }

@@ -111,3 +111,27 @@ export async function listSitemaps(env: Env, property: string): Promise<Sitemap[
   );
   return res.sitemap ?? [];
 }
+
+export interface IndexStatus {
+  verdict: string | null;
+  coverage_state: string | null;
+  last_crawl_at: string | null;
+}
+
+/** Google's index status for one URL (Search Console URL Inspection API, 2,000 per property per day). */
+export async function inspectUrl(env: Env, property: string, url: string): Promise<IndexStatus> {
+  const token = await accessToken(env);
+  const res = await fetchJson<{
+    inspectionResult?: { indexStatusResult?: { verdict?: string; coverageState?: string; lastCrawlTime?: string } };
+  }>(
+    "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect",
+    {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({ inspectionUrl: url, siteUrl: property }),
+    },
+    "URL Inspection",
+  );
+  const r = res.inspectionResult?.indexStatusResult ?? {};
+  return { verdict: r.verdict ?? null, coverage_state: r.coverageState ?? null, last_crawl_at: r.lastCrawlTime ?? null };
+}

@@ -1,6 +1,13 @@
 # Copy to .dev.vars for local development. In production set each one with
 #   npx wrangler secret put NAME
 
+# Supabase project secret key (Project Settings -> API Keys -> secret key, or the
+# legacy service_role key). Set SUPABASE_URL in wrangler.jsonc.
+SUPABASE_SECRET_KEY=
+
+# Claude API key for the AI summaries (https://console.anthropic.com)
+ANTHROPIC_API_KEY=
+
 # Password for the dashboard (any username works in the browser prompt)
 DASHBOARD_PASSWORD=change-me
 

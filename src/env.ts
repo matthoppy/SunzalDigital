@@ -1,6 +1,9 @@
 export interface Env {
-  DB: D1Database;
   ASSETS: Fetcher;
+
+  SUPABASE_URL?: string;
+  SUPABASE_SECRET_KEY?: string;
+  ANTHROPIC_API_KEY?: string;
 
   DASHBOARD_PASSWORD?: string;
   CF_API_TOKEN?: string;
@@ -16,6 +19,8 @@ export interface Env {
   RANK_CHECK_INTERVAL_DAYS?: string;
   RANK_DEPTH?: string;
   RANK_LANGUAGE_CODE?: string;
+  INDEX_CHECKS_PER_SITE?: string;
+  DAILY_AI_SUMMARY?: string;
 }
 
 export interface Site {
@@ -39,7 +44,7 @@ export interface Keyword {
   keyword: string;
   area: string | null;
   location: string;
-  track_maps: number;
+  track_maps: boolean;
 }
 
 export function intVar(value: string | undefined, fallback: number): number {
@@ -51,4 +56,5 @@ export const configured = (env: Env) => ({
   cloudflare: Boolean(env.CF_API_TOKEN && env.CF_ACCOUNT_ID),
   searchConsole: Boolean(env.GOOGLE_SERVICE_ACCOUNT_JSON),
   rankTracking: Boolean(env.DATAFORSEO_LOGIN && env.DATAFORSEO_PASSWORD && env.WEBHOOK_SECRET && env.PUBLIC_URL),
+  aiSummary: Boolean(env.ANTHROPIC_API_KEY),
 });

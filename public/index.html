@@ -121,7 +121,9 @@ main { padding-top: 22px; display: grid; gap: 28px; }
 .link-btn { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; font-size: 0.9rem; }
 
 /* stat tiles */
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+@media (min-width: 640px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } .tiles.four { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 .tile { background: var(--surface); padding: 14px 16px 12px; display: grid; gap: 2px; align-content: start; min-width: 0; }
 .tile .label { font-size: 0.82rem; color: var(--fg-2); }
 .tile .value { font-size: 1.65rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
@@ -230,6 +232,15 @@ details.settings[open] > summary::after { content: " –"; }
 .kw-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
 .kw-list li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .loading main { opacity: 0.55; transition: opacity 0.2s; }
+
+/* AI summary */
+.summary { display: grid; gap: 12px; }
+.summary .headline { font-family: var(--font-display); font-weight: 500; font-size: 1.15rem; line-height: 1.35; max-width: 70ch; text-wrap: pretty; }
+.summary ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.summary li { display: grid; grid-template-columns: 7.5rem 1fr; gap: 12px; align-items: baseline; }
+.summary li .pill { justify-self: start; }
+@media (max-width: 520px) { .summary li { grid-template-columns: 1fr; gap: 4px; } }
+.region { display: inline-block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.04em; padding: 0 5px; border-radius: 4px; border: 1px solid var(--line-strong); color: var(--fg-2); vertical-align: 2px; margin-left: 6px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -306,6 +317,9 @@ function timeAgo(iso) {
   if (hrs < 36) return `${hrs} h ago`;
   return `${Math.round(hrs / 24)} days ago`;
 }
+const REGIONS = { "United Kingdom": "UK", "New Zealand": "NZ", "Australia": "AU", "Ireland": "IE", "United States": "US", "Canada": "CA" };
+const regionOf = (location) => { const c = (location || "").split(",").pop().trim(); return REGIONS[c] || (c ? c.slice(0, 2).toUpperCase() : null); };
+const regionChip = (site) => { const r = regionOf(site.default_location); return r ? h("span", { class: "region", title: site.default_location }, r) : null; };
 const pathOf = (url) => { try { const u = new URL(url); return u.pathname + u.search; } catch { return url; } };
 
 /** Splits date-keyed rows into the selected window and the one before it. */
@@ -569,6 +583,15 @@ function findIssues(d) {
       out.push({ severity: "info", kind: "ranking", message: `“${k.keyword}” slipped from ${first} to ${latest}` });
     }
   }
+  const notIndexed = (d.index || []).filter((p) => p.verdict !== "PASS");
+  if (notIndexed.length) {
+    out.push({ severity: "warning", kind: "indexing", message: `${notIndexed.length} ${notIndexed.length === 1 ? "page isn't" : "pages aren't"} indexed by Google`, url: notIndexed.length === 1 ? notIndexed[0].url : null });
+  }
+  const lowCtr = d.queries.filter((q) => q.impressions >= 100 && q.ctr < 0.02).sort((a, b) => b.impressions - a.impressions);
+  for (const q of lowCtr.slice(0, 2)) {
+    out.push({ severity: "info", kind: "ctr", message: `“${q.query}” was seen ${fmtInt(q.impressions)} times but only ${fmtPct(q.ctr, 1)} clicked. A better page title and meta description should help.` });
+  }
+
   const order = { critical: 0, warning: 1, info: 2 };
   return [...out, ...d.issues].sort((a, b) => order[a.severity] - order[b.severity]);
 }
@@ -595,6 +618,7 @@ const liveBackend = {
   addKeywords: (id, keywords) => call("POST", `api/sites/${id}/keywords`, { keywords }),
   deleteKeyword: (id) => call("DELETE", `api/keywords/${id}`),
   sync: (id) => call("POST", `api/sites/${id}/sync`),
+  summarise: (id, days) => call("POST", `api/sites/${id}/summary?days=${days}`),
 };
 
 /* Example data for previewing the dashboard before it is connected. */
@@ -630,23 +654,28 @@ function makeDemoBackend() {
         ["bespoke shower screens london", "London", 19, 14, null, null],
         ["glass shower screens london", "London", 12, 11, null, null],
       ],
+      lowCtr: "bespoke shower enclosures london",
       pages: ["/", "/frameless-showers/", "/shower-screens/", "/areas/fulham/", "/areas/putney/", "/gallery/", "/contact/", "/areas/clapham/"],
+      notIndexed: [["/areas/wandsworth/", "Crawled - currently not indexed"], ["/areas/battersea/", "Discovered - currently not indexed"], ["/blog/shower-tray-guide/", "Duplicate without user-selected canonical"]],
       vitals: { lcp_ms: 2100, inp_ms: 140, cls: 0.04, ttfb_ms: 420, fcp_ms: 1300, page_load_ms: 2600 },
       issues: [{ severity: "warning", kind: "sitemap", message: "Sitemap has 2 warning(s)", url: "https://customshowers.example/sitemap.xml" }],
       uptimeDip: 12,
     },
     {
-      site: { id: 2, name: "Harbour Kitchens", domain: "harbourkitchens.example", gsc_property: "https://harbourkitchens.example/", default_location: "Brighton,England,United Kingdom", business_name: "Harbour Kitchens" },
+      site: { id: 2, name: "Balustrading Concepts", domain: "balustradingconcepts.example", gsc_property: "sc-domain:balustradingconcepts.example", default_location: "Auckland,Auckland,New Zealand", business_name: "Balustrading Concepts" },
       visits: 95, growth: 0.15,
       keywords: [
-        ["kitchen fitters hove", "Hove", 7, 4, 3, 2],
-        ["bespoke kitchens brighton", "Brighton", 11, 13, 9, 11],
-        ["kitchen installation shoreham", "Shoreham", 9, 12, 12, 15],
-        ["kitchen worktops lewes", "Lewes", 22, 17, null, null],
+        ["frameless glass balustrade takapuna", "Takapuna", 6, 3, 4, 2],
+        ["glass balustrades ponsonby", "Ponsonby", 7, 4, 5, 3],
+        ["glass balustrade auckland", "Auckland", 9, 5, 7, 4],
+        ["glass pool fencing remuera", "Remuera", 12, 8, 10, 6],
+        ["stainless steel balustrade albany", "Albany", 15, 18, null, null],
       ],
-      pages: ["/", "/kitchens/", "/worktops/", "/projects/", "/contact/"],
+      lowCtr: "balustrade cost per metre nz",
+      pages: ["/", "/glass-balustrades/", "/pool-fencing/", "/projects/", "/areas/takapuna/", "/contact/"],
+      notIndexed: [["/areas/albany/", "Crawled - currently not indexed"]],
       vitals: { lcp_ms: 3400, inp_ms: 260, cls: 0.12, ttfb_ms: 980, fcp_ms: 1900, page_load_ms: 4100 },
-      issues: [{ severity: "critical", kind: "broken-page", message: "Page returns HTTP 404", url: "https://harbourkitchens.example/projects/shoreham-oak/" }],
+      issues: [{ severity: "critical", kind: "broken-page", message: "Page returns HTTP 404", url: "https://balustradingconcepts.example/projects/devonport-deck/" }],
       clickDrop: true,
     },
     {
@@ -696,6 +725,7 @@ function makeDemoBackend() {
       const clicks = Math.round(impressions * (q === b.site.name.toLowerCase() ? 0.42 : 0.02 + rand() * 0.06));
       return { query: q, clicks, impressions, ctr: clicks / impressions, position: +(2 + rand() * 14).toFixed(1) };
     }).sort((a, z) => z.clicks - a.clicks);
+    if (b.lowCtr) queries.splice(3, 0, { query: b.lowCtr, clicks: 9, impressions: 1240, ctr: 9 / 1240, position: 7.8 });
     const brokenUrl = b.issues.find((i) => i.kind === "broken-page")?.url;
     const pages = [...b.pages.map((p) => `https://${b.site.domain}${p}`), ...(brokenUrl ? [brokenUrl] : [])].map((page, i) => {
       const impressions = Math.round((2400 / (i + 1)) * (0.7 + rand() * 0.6));
@@ -712,13 +742,51 @@ function makeDemoBackend() {
       return { date, checks, up: checks - down, avg_ms: 180 + Math.round(rand() * 120) };
     });
     const synced = new Date(Date.now() - (40 + b.site.id * 70) * 60000).toISOString();
+    const bad = new Map(b.notIndexed || []);
+    const index = [...b.pages, ...bad.keys()].map((p) => ({
+      url: `https://${b.site.domain}${p}`, verdict: bad.has(p) ? "NEUTRAL" : "PASS",
+      coverage_state: bad.get(p) || "Submitted and indexed",
+      last_crawl_at: bad.get(p)?.startsWith("Discovered") ? null : new Date(Date.now() - (2 + rand() * 20) * 86400000).toISOString(),
+      checked_at: synced,
+    })).sort((x, y) => (x.verdict === "PASS") - (y.verdict === "PASS"));
     return {
       site: { ...b.site, cf_site_tag: null, cf_zone_id: null, created_at: synced, last_synced_at: synced, last_sync_error: null },
-      traffic, gsc, keywords, queries, pages, vitals, uptime,
+      traffic, gsc, keywords, queries, pages, vitals, uptime, index,
       issues: b.issues.map((i) => ({ ...i, detected_at: synced })),
-      lastCheck: { checked_at: new Date(Date.now() - 4 * 60000).toISOString(), ok: 1, status_code: 200, response_ms: 210 },
+      lastCheck: { checked_at: new Date(Date.now() - 4 * 60000).toISOString(), ok: true, status_code: 200, response_ms: 210 },
     };
   });
+
+  /* Written from the example figures so the wording matches the page. */
+  function demoSummary(d, daysN) {
+    const { current, previous } = splitPeriods(d.gsc, daysN);
+    const t = splitPeriods(d.traffic, daysN);
+    const trend = (now, before, what) => {
+      const pct = before ? Math.round(((now - before) / before) * 100) : 0;
+      return Math.abs(pct) < 2 ? `${what} held steady` : `${what} ${pct > 0 ? "rose" : "fell"} ${Math.abs(pct)}%`;
+    };
+    const kws = d.keywords.map((k) => ({ k, start: k.organic[0]?.position, now: k.organic.at(-1)?.position })).filter((x) => x.start && x.now);
+    const best = [...kws].sort((a, z) => (z.start - z.now) - (a.start - a.now))[0];
+    const worst = [...kws].sort((a, z) => (a.start - a.now) - (z.start - z.now))[0];
+    const strongest = [...kws].filter((x) => x.k.area).sort((a, z) => a.now - z.now)[0];
+    const lowCtr = d.queries.filter((q) => q.impressions >= 100 && q.ctr < 0.02).sort((a, z) => z.impressions - a.impressions)[0];
+    const notIndexed = d.index.filter((p) => p.verdict !== "PASS");
+    const lcp = avgVitals(d.vitals.slice(-daysN)).lcp_ms;
+    const points = [];
+    if (best && best.start > best.now) points.push({ tone: "good", text: `“${best.k.keyword}” moved from #${best.start} to #${best.now} on Google.` });
+    if (strongest) points.push({ tone: "good", text: `${strongest.k.area} is the strongest area, at #${strongest.now} for “${strongest.k.keyword}”${strongest.k.maps.length ? ` and #${strongest.k.maps.at(-1).position} on Google Maps` : ""}.` });
+    if (worst && worst.now > worst.start) points.push({ tone: "watch", text: `“${worst.k.keyword}” slipped from #${worst.start} to #${worst.now}. ${worst.k.area} needs more local content or reviews.` });
+    if (lowCtr) points.push({ tone: "action", text: `“${lowCtr.query}” was seen ${fmtInt(lowCtr.impressions)} times but only ${fmtPct(lowCtr.ctr, 1)} clicked. Rewrite that page's title and meta description.` });
+    if (notIndexed.length) points.push({ tone: "action", text: `${notIndexed.length} ${notIndexed.length === 1 ? "page isn't" : "pages aren't"} indexed by Google, including ${pathOf(notIndexed[0].url)} (${notIndexed[0].coverage_state.toLowerCase()}).` });
+    if (lcp > 2500) points.push({ tone: "watch", text: `Pages take ${(lcp / 1000).toFixed(1)} s to show their main content on phones. Compressing the large project photos would help.` });
+    return {
+      id: d.site.id, days: daysN, model: "example", created_at: new Date(Date.now() - 50 * 60000).toISOString(),
+      summary: {
+        headline: `${trend(sum(current, "clicks"), sum(previous, "clicks"), "Google clicks")} and ${trend(sum(t.current, "visits"), sum(t.previous, "visits"), "visitors").toLowerCase()} over the last ${daysN} days.`,
+        points: points.slice(0, 6),
+      },
+    };
+  }
 
   const clip = (rows, from) => rows.filter((r) => r.date >= from);
   const find = (id) => { const x = sites.find((d) => d.site.id === Number(id)); if (!x) throw new Error("Site not found"); return x; };
@@ -737,6 +805,7 @@ function makeDemoBackend() {
           gsc: clip(d.gsc, from),
           ranks: d.keywords.map((k) => ({ id: k.id, keyword: k.keyword, area: k.area, organic: k.organic.at(-1)?.position ?? null, maps: k.maps.at(-1)?.position ?? null })),
           uptime: { checks: sum(clip(d.uptime, upFrom), "checks"), up: sum(clip(d.uptime, upFrom), "up") },
+          index: { checked: d.index.length, indexed: d.index.filter((p) => p.verdict === "PASS").length },
           issues: Object.entries(d.issues.reduce((t, i) => ((t[i.severity] = (t[i.severity] || 0) + 1), t), {})).map(([severity, n]) => ({ severity, n })),
         })),
       });
@@ -746,15 +815,17 @@ function makeDemoBackend() {
       const from = isoDate(-daysN * 2 + 1), cur = isoDate(-daysN + 1), rk = isoDate(-daysN);
       return delay({
         days: daysN, site: d.site,
-        configured: { cloudflare: true, searchConsole: true, rankTracking: true },
+        configured: { cloudflare: true, searchConsole: true, rankTracking: true, aiSummary: true },
         traffic: clip(d.traffic, from), vitals: clip(d.vitals, cur), gsc: clip(d.gsc, from),
         keywords: d.keywords.map((k) => ({ ...k, organic: clip(k.organic, rk), maps: clip(k.maps, rk) })),
-        queries: d.queries, pages: d.pages, issues: d.issues,
+        queries: d.queries, pages: d.pages, issues: d.issues, index: d.index,
+        summary: demoSummary({ ...d, keywords: d.keywords.map((k) => ({ ...k, organic: clip(k.organic, rk), maps: clip(k.maps, rk) })) }, daysN),
         uptime: { daily: clip(d.uptime, cur), last: d.lastCheck },
       });
     },
     createSite: readOnly, updateSite: readOnly, deleteSite: readOnly, addKeywords: readOnly, deleteKeyword: readOnly,
     sync: () => delay({ errors: [] }),
+    summarise: () => delay({}),
   };
 }
 
@@ -841,7 +912,7 @@ function overviewView({ days, sites }) {
     go({ name: "site", id: site.id });
   }));
 
-  const tiles = h("div", { class: "tiles" },
+  const tiles = h("div", { class: "tiles four" },
     tile("Visitors", fmtCompact(total("visits")), delta(total("visits"), prevTotal("visitsPrev"))),
     tile("Google clicks", fmtCompact(total("clicks")), delta(total("clicks"), prevTotal("clicksPrev"))),
     tile("Keywords in Google top 3", `${allTop3} of ${allTracked}`, h("span", { class: "delta flat" }, `${total("top10")} on page one`)),
@@ -856,18 +927,19 @@ function overviewView({ days, sites }) {
   const table = h("table", null,
     h("thead", null, h("tr", null,
       h("th", null, "Website"), h("th", { class: "r" }, "Visitors"), h("th", { class: "r hide-sm" }, "Google clicks"),
-      h("th", { class: "r" }, "Avg position"), h("th", { class: "r hide-sm" }, "Top 3 / top 10"), h("th", { class: "r hide-sm" }, "Uptime"),
+      h("th", { class: "r" }, "Avg position"), h("th", { class: "r hide-sm" }, "Top 3 / top 10"), h("th", { class: "r hide-sm", title: "Pages Google has indexed, of those checked" }, "Indexed"), h("th", { class: "r hide-sm" }, "Uptime"),
       h("th", null, "Status"), h("th", { class: "hide-sm" }, `Visitors, ${days} days`))),
     h("tbody", null, rows.map((r) => h("tr", {
       class: "clickable", tabindex: 0,
       onclick: () => go({ name: "site", id: r.x.site.id }),
       onkeydown: (e) => { if (e.key === "Enter") go({ name: "site", id: r.x.site.id }); },
     },
-      h("td", { class: "site-cell" }, h("b", null, r.x.site.name), h("span", { class: "mono muted" }, r.x.site.domain)),
+      h("td", { class: "site-cell" }, h("b", null, r.x.site.name, regionChip(r.x.site)), h("span", { class: "mono muted" }, r.x.site.domain)),
       h("td", { class: "r" }, fmtInt(r.visits), h("br"), delta(r.visits, r.visitsPrev)),
       h("td", { class: "r hide-sm" }, fmtInt(r.clicks), h("br"), delta(r.clicks, r.clicksPrev)),
       h("td", { class: "r" }, h("span", { class: "pos" }, fmtPos(r.avgPos, 1)), h("br"), h("span", { class: "muted", style: "font-size:0.8rem" }, `${r.tracked} keywords`)),
       h("td", { class: "r hide-sm" }, `${r.top3} / ${r.top10}`),
+      h("td", { class: "r hide-sm" }, r.x.index && r.x.index.checked ? `${r.x.index.indexed} / ${r.x.index.checked}` : "—"),
       h("td", { class: "r hide-sm" }, fmtPct(r.uptime, 2)),
       h("td", null, statusPill(r)),
       h("td", { class: "hide-sm" }, sparkline(r.spark))))));
@@ -912,7 +984,7 @@ function siteView(d) {
   const head = h("div", { class: "page-head" },
     h("div", { style: "min-width:0" },
       h("button", { class: "link-btn", type: "button", onclick: () => go({ name: "overview" }) }, "← All websites"),
-      h("h1", { style: "margin-top:6px" }, site.name),
+      h("h1", { style: "margin-top:6px" }, site.name, regionChip(site)),
       h("div", { class: "meta" },
         h("a", { class: "mono", href: `https://${site.domain}/`, target: "_blank", rel: "noopener" }, site.domain),
         h("span", null, `Synced ${timeAgo(site.last_synced_at)}`),
@@ -922,10 +994,14 @@ function siteView(d) {
 
   const tiles = h("div", { class: "tiles" },
     tile("Visitors", fmtCompact(sum(t.current, "visits")), delta(sum(t.current, "visits"), t.previous.length ? sum(t.previous, "visits") : null), sparkline(byDate(d.traffic, "visits"))),
-    tile("Page views", fmtCompact(sum(t.current, "pageviews")), delta(sum(t.current, "pageviews"), t.previous.length ? sum(t.previous, "pageviews") : null)),
     tile("Google clicks", fmtCompact(sum(g.current, "clicks")), delta(sum(g.current, "clicks"), g.previous.length ? sum(g.previous, "clicks") : null), sparkline(byDate(d.gsc, "clicks"))),
     tile("Google impressions", fmtCompact(sum(g.current, "impressions")), delta(sum(g.current, "impressions"), g.previous.length ? sum(g.previous, "impressions") : null)),
     tile("Avg Google position", fmtPos(pos, 1), delta(pos, posPrev, { lowerIsBetter: true, absolute: true, digits: 1 })),
+    tile("Indexed pages", d.index.length ? `${d.index.filter((p) => p.verdict === "PASS").length} of ${d.index.length}` : "—", (() => {
+      const bad = d.index.filter((p) => p.verdict !== "PASS").length;
+      return !d.index.length ? h("span", { class: "delta flat" }, "no checks yet")
+        : bad ? h("span", { class: "delta down" }, `${bad} not indexed`) : h("span", { class: "delta up" }, "all indexed");
+    })()),
     tile("Uptime", checks ? fmtPct(up / checks, 2) : "—", h("span", { class: "delta flat" }, d.uptime.last ? `${d.uptime.last.response_ms ?? "—"} ms last check` : "no checks yet")));
 
   const attention = h("section", { class: "band" },
@@ -937,7 +1013,58 @@ function siteView(d) {
           h("div", { class: "what" }, i.message, i.url ? h("small", { class: "mono" }, i.url) : null))))
       : h("div", { class: "empty" }, h("span", { class: "pill good" }, "All clear"), "  Nothing needs fixing right now.")));
 
-  return [head, tiles, attention, rankingsBand(d), trafficBand(d, dates, byDate), searchBand(d, dates, byDate), speedBand(d), uptimeBand(d, dates), settingsBand(d)];
+  return [head, summaryBand(d), tiles, attention, rankingsBand(d), trafficBand(d, dates, byDate), searchBand(d, dates, byDate), indexingBand(d), speedBand(d), uptimeBand(d, dates), settingsBand(d)];
+}
+
+const TONES = { good: ["good", "Going well"], watch: ["warning", "Keep an eye on"], action: ["critical", "Do this"] };
+
+function summaryBand(d) {
+  const sm = d.summary;
+  const enabled = d.configured?.aiSummary;
+  const msg = h("span", { class: "notice" });
+  const btn = h("button", { class: "btn", type: "button", disabled: !enabled, onclick: async () => {
+    btn.disabled = true; msg.className = "notice"; msg.textContent = "Claude is reading this site's figures…";
+    try { await state.backend.summarise(d.site.id, d.days); render(); }
+    catch (err) { msg.className = "notice error"; msg.textContent = err.message; btn.disabled = false; }
+  } }, sm ? "Write a new summary" : "Write a summary");
+  const meta = sm ? `Written by Claude ${timeAgo(sm.created_at)} · last ${sm.days} days` : null;
+  const body = sm
+    ? h("div", { class: "panel summary" },
+        h("p", { class: "headline", style: "margin:0" }, sm.summary.headline),
+        h("ul", null, (sm.summary.points || []).map((p) => {
+          const [cls, label] = TONES[p.tone] || TONES.watch;
+          return h("li", null, h("span", { class: `pill ${cls}` }, label), h("span", null, p.text));
+        })))
+    : h("div", { class: "panel empty" }, enabled
+        ? "No summary yet. Claude reads this site's traffic, rankings, Search Console and indexing data and writes what changed and what to fix."
+        : "Add an ANTHROPIC_API_KEY secret to the worker and Claude will write a short summary of each site after every daily sync.");
+  return h("section", { class: "band" },
+    h("div", { class: "band-head" },
+      h("div", null, h("h2", null, "AI summary"), meta ? h("p", null, meta) : null),
+      h("div", { class: "actions", style: "align-items:center" }, msg, btn)),
+    body);
+}
+
+function indexingBand(d) {
+  const bad = d.index.filter((p) => p.verdict !== "PASS");
+  const ok = d.index.length - bad.length;
+  return h("section", { class: "band" },
+    h("div", { class: "band-head" }, h("div", null, h("h2", null, "Google indexing"),
+      h("p", null, "Pages from the sitemap, checked a few a day with Search Console's URL Inspection. Pages that aren't indexed can't appear in Google."))),
+    !d.index.length
+      ? h("div", { class: "panel empty" }, d.site.gsc_property ? "No pages checked yet. The first checks run with the next sync." : "Add the Search Console property in Settings to check which pages Google has indexed.")
+      : h("div", { class: "panel flush" },
+          h("div", { class: "legend", style: "padding:12px 12px 0" },
+            h("span", null, h("span", { class: "pill good" }, `${ok} indexed`)),
+            bad.length ? h("span", null, h("span", { class: "pill warning" }, `${bad.length} not indexed`)) : null),
+          bad.length
+            ? h("div", { class: "table-scroll" }, h("table", null,
+                h("thead", null, h("tr", null, h("th", null, "Page"), h("th", null, "Google says"), h("th", { class: "hide-sm" }, "Last crawled"))),
+                h("tbody", null, bad.map((p) => h("tr", null,
+                  h("td", { class: "mono cell-url", title: p.url }, pathOf(p.url)),
+                  h("td", null, p.coverage_state || p.verdict),
+                  h("td", { class: "hide-sm" }, p.last_crawl_at ? timeAgo(p.last_crawl_at) : "never"))))))
+            : h("div", { class: "empty" }, "Every checked page is indexed.")));
 }
 
 function rankingsBand(d) {
@@ -1158,7 +1285,8 @@ function settingsBand(d) {
         h("ul", { class: "kw-list" },
           connRow(conn.cloudflare, "Cloudflare", "visitors and speed"),
           connRow(conn.searchConsole, "Google Search Console", "clicks, searches, pages, sitemaps"),
-          connRow(conn.rankTracking, "DataForSEO", "local Google and Maps positions"))),
+          connRow(conn.rankTracking, "DataForSEO", "local Google and Maps positions"),
+          connRow(conn.aiSummary, "Claude", "AI summaries"))),
       h("div", { class: "panel" }, h("h3", { style: "margin-bottom:12px" }, "Website details"),
         siteForm(site, async (data) => { await state.backend.updateSite(site.id, data); render(); })),
       h("div", { class: "panel", style: "display:grid;gap:12px" }, h("h3", null, `Tracked keywords (${d.keywords.length})`), kwList, addKw),
