@@ -1,0 +1,1195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sunzal SEO Control Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an operator's board. Slim top bar holds the range filter; the portfolio table leads,
+   each site opens into stacked bands ordered by what a local business owner checks first. */
+:root {
+  --bg: #f3f5f4;
+  --surface: #fcfcfb;
+  --sunken: #eceeec;
+  --fg: #111715;
+  --fg-2: #4b5450;
+  --muted: #7d8581;
+  --line: #e0e3e0;
+  --line-strong: #c5cbc7;
+  --accent: #1c5cab;
+  --accent-fg: #ffffff;
+  --accent-wash: #e5eef9;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --good: #0ca30c;
+  --good-text: #006300;
+  --warning: #fab219;
+  --warning-text: #7a5200;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --critical-text: #a92626;
+  --pill-good: #e3f3e3;
+  --pill-warn: #fdf1d6;
+  --pill-crit: #fbe4e4;
+  --pill-info: #e9ebf0;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1211; --surface: #181b1a; --sunken: #121514; --fg: #f4f6f5; --fg-2: #c0c6c2; --muted: #8b928e;
+    --line: #2a2e2c; --line-strong: #3a3f3c; --accent: #6da7ec; --accent-fg: #0b1420; --accent-wash: #16263a;
+    --series-1: #3987e5; --series-2: #d95926; --good-text: #3dc23d; --warning-text: #fab219; --critical-text: #ef7676;
+    --pill-good: #142a16; --pill-warn: #2f2610; --pill-crit: #351819; --pill-info: #23262b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1211; --surface: #181b1a; --sunken: #121514; --fg: #f4f6f5; --fg-2: #c0c6c2; --muted: #8b928e;
+  --line: #2a2e2c; --line-strong: #3a3f3c; --accent: #6da7ec; --accent-fg: #0b1420; --accent-wash: #16263a;
+  --series-1: #3987e5; --series-2: #d95926; --good-text: #3dc23d; --warning-text: #fab219; --critical-text: #ef7676;
+  --pill-good: #142a16; --pill-warn: #2f2610; --pill-crit: #351819; --pill-info: #23262b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 15px/1.5 var(--font-body);
+  padding-inline: 16px; padding-block: 0 48px;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); line-height: 1.1; }
+h2 { font-size: 1.2rem; }
+h3 { font-size: 1rem; font-weight: 500; }
+.mono { font-family: var(--font-data); font-size: 0.86em; }
+.muted { color: var(--muted); }
+.secondary { color: var(--fg-2); }
+.num { font-variant-numeric: tabular-nums; }
+.wrap { max-width: 1180px; margin: 0 auto; }
+
+/* top bar */
+.topbar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  margin-inline: -16px; padding: 10px 16px;
+}
+.topbar .wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 8px; margin-right: auto; min-width: 0; }
+.brand b { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; }
+.brand span { color: var(--muted); font-size: 0.85rem; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px;
+  font-size: 0.78rem; font-weight: 500; background: var(--pill-info); color: var(--fg-2); white-space: nowrap;
+}
+.chip.demo { background: var(--pill-warn); color: var(--warning-text); }
+.chip.live { background: var(--pill-good); color: var(--good-text); }
+.seg { display: inline-flex; background: var(--sunken); border: 1px solid var(--line); border-radius: 8px; padding: 2px; }
+.seg button {
+  border: 0; background: transparent; padding: 4px 11px; border-radius: 6px; cursor: pointer;
+  font-size: 0.85rem; color: var(--fg-2);
+}
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); font-weight: 600; box-shadow: 0 0 0 1px var(--line-strong); }
+
+.banner {
+  margin: 14px 0 0; padding: 10px 14px; border-radius: var(--radius);
+  background: var(--pill-warn); color: var(--fg); font-size: 0.9rem;
+}
+
+main { padding-top: 22px; display: grid; gap: 28px; }
+.page-head { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; justify-content: space-between; }
+.page-head .meta { display: flex; gap: 10px 14px; flex-wrap: wrap; align-items: center; color: var(--fg-2); font-size: 0.9rem; margin-top: 6px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  border: 1px solid var(--line-strong); background: var(--surface); padding: 6px 14px; border-radius: 8px;
+  cursor: pointer; font-size: 0.9rem; font-weight: 500;
+}
+.btn:hover { background: var(--sunken); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--critical-text); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.link-btn { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; font-size: 0.9rem; }
+
+/* stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.tile { background: var(--surface); padding: 14px 16px 12px; display: grid; gap: 2px; align-content: start; min-width: 0; }
+.tile .label { font-size: 0.82rem; color: var(--fg-2); }
+.tile .value { font-size: 1.65rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+.tile .foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
+.delta { font-size: 0.8rem; font-weight: 500; white-space: nowrap; }
+.delta.up { color: var(--good-text); }
+.delta.down { color: var(--critical-text); }
+.delta.flat { color: var(--muted); }
+
+/* bands */
+.band { display: grid; gap: 12px; }
+.band-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.band-head p { margin: 2px 0 0; color: var(--fg-2); font-size: 0.88rem; max-width: 65ch; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; min-width: 0; }
+.panel.flush { padding: 0; }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.empty { padding: 22px 16px; color: var(--fg-2); font-size: 0.9rem; }
+
+/* tables */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+th { text-align: left; font-weight: 500; font-size: 0.78rem; color: var(--muted); padding: 10px 12px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; }
+tbody tr.clickable { cursor: pointer; }
+tbody tr.clickable:hover { background: var(--sunken); }
+tbody tr[aria-selected="true"] { background: var(--accent-wash); }
+.site-cell b { display: block; font-weight: 600; }
+.cell-url { max-width: 340px; overflow-wrap: anywhere; }
+.pos { font-weight: 600; font-variant-numeric: tabular-nums; }
+.pos.top3 { color: var(--good-text); }
+@media (max-width: 680px) { .hide-sm { display: none; } }
+
+.pill { display: inline-flex; align-items: center; gap: 5px; padding: 1px 8px; border-radius: 999px; font-size: 0.78rem; font-weight: 500; white-space: nowrap; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.good { background: var(--pill-good); color: var(--good-text); }
+.pill.warning { background: var(--pill-warn); color: var(--warning-text); }
+.pill.critical { background: var(--pill-crit); color: var(--critical-text); }
+.pill.info { background: var(--pill-info); color: var(--fg-2); }
+
+/* issues */
+.issues { list-style: none; margin: 0; padding: 0; }
+.issues li { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); align-items: baseline; }
+.issues li:last-child { border-bottom: 0; }
+.issues .what { min-width: 0; overflow-wrap: anywhere; }
+.issues .what small { display: block; color: var(--muted); }
+
+/* charts */
+.chart { position: relative; width: 100%; min-width: 0; }
+.chart svg { display: block; overflow: visible; }
+.chart .grid line { stroke: var(--line); stroke-width: 1; }
+.chart .axis text { fill: var(--muted); font-size: 11px; font-family: var(--font-body); font-variant-numeric: tabular-nums; }
+.chart .baseline { stroke: var(--line-strong); stroke-width: 1; }
+.chart .crosshair { stroke: var(--line-strong); stroke-width: 1; }
+.tooltip {
+  position: absolute; pointer-events: none; z-index: 3; min-width: 140px;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px;
+  padding: 8px 10px; font-size: 0.82rem; box-shadow: 0 6px 18px rgb(0 0 0 / 0.12);
+}
+.tooltip .t-date { color: var(--muted); margin-bottom: 4px; }
+.tooltip .t-row { display: flex; align-items: center; gap: 8px; }
+.tooltip .t-row strong { font-variant-numeric: tabular-nums; min-width: 3ch; }
+.tooltip .t-row span:last-child { color: var(--fg-2); }
+.key { display: inline-block; width: 14px; height: 2px; border-radius: 2px; flex: none; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.82rem; color: var(--fg-2); align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.spark { display: block; }
+
+/* vitals */
+.vitals { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.vital { display: grid; gap: 6px; }
+.vital .value { font-size: 1.5rem; font-weight: 600; }
+.meter { position: relative; height: 6px; border-radius: 3px; display: flex; gap: 2px; }
+.meter i { flex: 1; border-radius: 3px; opacity: 0.35; }
+.meter i:nth-child(1) { background: var(--good); }
+.meter i:nth-child(2) { background: var(--warning); }
+.meter i:nth-child(3) { background: var(--critical); }
+.meter b { position: absolute; top: -4px; width: 4px; height: 14px; border-radius: 2px; background: var(--fg); transform: translateX(-2px); }
+
+/* uptime */
+.uptime-strip { display: flex; gap: 2px; height: 30px; align-items: stretch; }
+.uptime-strip i { flex: 1; border-radius: 2px; min-width: 2px; background: var(--good); }
+.uptime-strip i.warn { background: var(--warning); }
+.uptime-strip i.down { background: var(--critical); }
+.uptime-strip i.none { background: var(--line); }
+
+/* forms */
+form.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px 16px; }
+label.field { display: grid; gap: 4px; font-size: 0.85rem; color: var(--fg-2); min-width: 0; }
+label.field small { color: var(--muted); }
+input[type="text"], textarea {
+  width: 100%; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface);
+  padding: 7px 10px; font-size: 0.92rem; color: var(--fg);
+}
+textarea { min-height: 110px; font-family: var(--font-data); font-size: 0.85rem; }
+.form-foot { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.notice { font-size: 0.88rem; }
+.notice.error { color: var(--critical-text); }
+.notice.ok { color: var(--good-text); }
+details.settings > summary { cursor: pointer; font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; list-style: none; }
+details.settings > summary::-webkit-details-marker { display: none; }
+details.settings > summary::after { content: " +"; color: var(--muted); }
+details.settings[open] > summary::after { content: " –"; }
+.kw-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
+.kw-list li { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.loading main { opacity: 0.55; transition: opacity 0.2s; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><b>Sunzal Digital</b><span>SEO control centre</span></div>
+    <span id="mode-chip" class="chip">Connecting…</span>
+    <div class="seg" role="group" aria-label="Date range" id="range">
+      <button type="button" data-days="7" aria-pressed="false">7 days</button>
+      <button type="button" data-days="30" aria-pressed="true">30 days</button>
+      <button type="button" data-days="90" aria-pressed="false">90 days</button>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div id="banner" class="banner" hidden></div>
+  <main id="app" aria-live="polite"></main>
+</div>
+
+<script>
+"use strict";
+
+/* ---------------- helpers ---------------- */
+
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "style") el.style.cssText = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of children.flat(Infinity)) {
+    if (c == null || c === false) continue;
+    el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+  return el;
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function s(tag, attrs, ...children) {
+  const el = document.createElementNS(SVGNS, tag);
+  for (const [k, v] of Object.entries(attrs || {})) if (v != null) el.setAttribute(k, v);
+  for (const c of children.flat()) if (c) el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return el;
+}
+
+const isoDate = (offset = 0, from = new Date()) => {
+  const d = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()));
+  d.setUTCDate(d.getUTCDate() + offset);
+  return d.toISOString().slice(0, 10);
+};
+const dateRange = (days) => Array.from({ length: days }, (_, i) => isoDate(i - days + 1));
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const fmtDay = (iso) => { const [, m, d] = iso.split("-"); return `${+d} ${MONTHS[+m - 1]}`; };
+const fmtInt = (n) => n == null ? "—" : Math.round(n).toLocaleString("en-GB");
+function fmtCompact(n) {
+  if (n == null || Number.isNaN(n)) return "—";
+  const a = Math.abs(n);
+  if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, "") + "M";
+  if (a >= 1e4) return (n / 1e3).toFixed(a >= 1e5 ? 0 : 1).replace(/\.0$/, "") + "K";
+  return fmtInt(n);
+}
+const fmtPos = (p, digits = 0) => p == null ? "—" : (digits ? p.toFixed(digits) : String(Math.round(p)));
+const fmtPct = (p, digits = 1) => p == null ? "—" : (p * 100).toFixed(digits).replace(/\.0+$/, "") + "%";
+const sum = (arr, key) => arr.reduce((t, r) => t + (Number(r[key]) || 0), 0);
+function timeAgo(iso) {
+  if (!iso) return "never";
+  const mins = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  if (mins < 2) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 36) return `${hrs} h ago`;
+  return `${Math.round(hrs / 24)} days ago`;
+}
+const pathOf = (url) => { try { const u = new URL(url); return u.pathname + u.search; } catch { return url; } };
+
+/** Splits date-keyed rows into the selected window and the one before it. */
+function splitPeriods(rows, days) {
+  const start = isoDate(-days + 1), prevStart = isoDate(-days * 2 + 1);
+  return {
+    current: rows.filter((r) => r.date >= start),
+    previous: rows.filter((r) => r.date >= prevStart && r.date < start),
+  };
+}
+function weightedPosition(rows) {
+  const impr = sum(rows, "impressions");
+  return impr ? rows.reduce((t, r) => t + r.position * r.impressions, 0) / impr : null;
+}
+/** Percentage change; for "lower is better" metrics the caller flips the sense. */
+function delta(curr, prev, { lowerIsBetter = false, absolute = false, digits = 0 } = {}) {
+  if (curr == null || prev == null || (!absolute && !prev)) return h("span", { class: "delta flat" }, "no earlier data");
+  const diff = absolute ? curr - prev : (curr - prev) / prev;
+  const good = lowerIsBetter ? diff < 0 : diff > 0;
+  const tiny = absolute ? Math.abs(diff) < 0.05 : Math.abs(diff) < 0.005;
+  const cls = tiny ? "flat" : good ? "up" : "down";
+  const arrow = tiny ? "→" : diff > 0 ? "↑" : "↓";
+  const text = absolute ? Math.abs(diff).toFixed(digits) : (Math.abs(diff) * 100).toFixed(0) + "%";
+  return h("span", { class: `delta ${cls}`, title: "Compared with the previous period" }, `${arrow} ${text}`);
+}
+
+/* ---------------- charts ---------------- */
+
+function niceStep(range, count) {
+  const raw = range / count, mag = 10 ** Math.floor(Math.log10(raw)), n = raw / mag;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+}
+function ticks(max, count = 4) {
+  if (!(max > 0)) max = 1;
+  const step = niceStep(max, count), out = [];
+  for (let v = 0; v <= Math.ceil(max / step) * step + step / 2; v += step) out.push(+v.toFixed(6));
+  return out;
+}
+
+const chartState = new WeakMap();
+const resizer = new ResizeObserver((entries) => {
+  for (const e of entries) {
+    const st = chartState.get(e.target);
+    if (st && Math.abs(st.width - e.contentRect.width) > 4) drawLineChart(e.target, st.opts);
+  }
+});
+
+/**
+ * Line chart with crosshair tooltip. series: [{name, color, values (aligned to dates, null = gap)}].
+ * invert: rank scale with 1 at the top.
+ */
+function lineChart(host, opts) {
+  host.classList.add("chart");
+  drawLineChart(host, opts);
+  resizer.observe(host);
+}
+function drawLineChart(host, opts) {
+  const { dates, series, invert = false, fmt = fmtInt, height = 220, label = "Chart" } = opts;
+  const width = Math.max(260, host.clientWidth || 600);
+  chartState.set(host, { width, opts });
+  host.replaceChildren();
+  const m = { l: invert ? 32 : 44, r: 12, t: 10, b: 26 };
+  const iw = width - m.l - m.r, ih = height - m.t - m.b;
+  const all = series.flatMap((sr) => sr.values).filter((v) => v != null);
+  if (!all.length) {
+    host.append(h("div", { class: "empty" }, opts.emptyText || "No data for this period yet."));
+    return;
+  }
+  let yTicks, y;
+  if (invert) {
+    // Ranks are whole numbers: step through 1, 2, 5, 10, 20… never 2.5.
+    const max = Math.max(10, ...all);
+    const step = [1, 2, 5, 10, 20, 25, 50].find((st) => max / st <= 5) || 100;
+    yTicks = [1];
+    for (let v = step; v < max + step; v += step) yTicks.push(v);
+    const top = yTicks[yTicks.length - 1];
+    y = (v) => m.t + ((v - 1) / (top - 1)) * ih;
+  } else {
+    yTicks = ticks(Math.max(...all), 4);
+    const top = yTicks[yTicks.length - 1];
+    y = (v) => m.t + ih - (v / top) * ih;
+  }
+  const n = dates.length;
+  const x = (i) => m.l + (n === 1 ? iw / 2 : (i * iw) / (n - 1));
+
+  const svg = s("svg", { viewBox: `0 0 ${width} ${height}`, width, height, role: "img", "aria-label": label });
+  const grid = s("g", { class: "grid axis" });
+  yTicks.forEach((t) => {
+    grid.append(s("line", { x1: m.l, x2: width - m.r, y1: y(t), y2: y(t) }));
+    grid.append(s("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end" }, invert ? String(t) : fmtCompact(t)));
+  });
+  svg.append(grid);
+  if (!invert) svg.append(s("line", { class: "baseline", x1: m.l, x2: width - m.r, y1: m.t + ih, y2: m.t + ih }));
+
+  const xAxis = s("g", { class: "axis" });
+  const tickCount = Math.min(n, width < 480 ? 3 : 6);
+  for (let k = 0; k < tickCount; k++) {
+    const i = tickCount === 1 ? 0 : Math.round((k * (n - 1)) / (tickCount - 1));
+    const anchor = k === 0 ? "start" : k === tickCount - 1 ? "end" : "middle";
+    xAxis.append(s("text", { x: x(i), y: height - 6, "text-anchor": anchor }, fmtDay(dates[i])));
+  }
+  svg.append(xAxis);
+
+  for (const sr of series) {
+    const segs = [];
+    let cur = [];
+    sr.values.forEach((v, i) => {
+      if (v == null) { if (cur.length) segs.push(cur); cur = []; }
+      else cur.push([x(i), y(v)]);
+    });
+    if (cur.length) segs.push(cur);
+    for (const seg of segs) {
+      const d = seg.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join("");
+      if (series.length === 1 && !invert && seg.length > 1) {
+        const area = `${d}L${seg[seg.length - 1][0].toFixed(1)},${m.t + ih}L${seg[0][0].toFixed(1)},${m.t + ih}Z`;
+        svg.append(s("path", { d: area, fill: sr.color, "fill-opacity": 0.1, stroke: "none" }));
+      }
+      if (seg.length === 1) svg.append(s("circle", { cx: seg[0][0], cy: seg[0][1], r: 3, fill: sr.color }));
+      else svg.append(s("path", { d, fill: "none", stroke: sr.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+    }
+    const last = sr.values.map((v, i) => [v, i]).filter(([v]) => v != null).pop();
+    if (last) svg.append(s("circle", { cx: x(last[1]), cy: y(last[0]), r: 4, fill: sr.color, stroke: "var(--surface)", "stroke-width": 2 }));
+  }
+
+  // hover layer
+  const cross = s("line", { class: "crosshair", y1: m.t, y2: m.t + ih, visibility: "hidden" });
+  const dots = series.map((sr) => s("circle", { r: 4, fill: sr.color, stroke: "var(--surface)", "stroke-width": 2, visibility: "hidden" }));
+  svg.append(cross, ...dots);
+  const hit = s("rect", { x: m.l - 6, y: 0, width: iw + 12, height, fill: "transparent", tabindex: 0 });
+  svg.append(hit);
+  host.append(svg);
+  const tip = h("div", { class: "tooltip", hidden: true });
+  host.append(tip);
+
+  const show = (i) => {
+    i = Math.max(0, Math.min(n - 1, i));
+    host.dataset.idx = i;
+    cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
+    tip.replaceChildren(h("div", { class: "t-date" }, fmtDay(dates[i])));
+    series.forEach((sr, k) => {
+      const v = sr.values[i];
+      if (v == null) dots[k].setAttribute("visibility", "hidden");
+      else { dots[k].setAttribute("cx", x(i)); dots[k].setAttribute("cy", y(v)); dots[k].setAttribute("visibility", "visible"); }
+      tip.append(h("div", { class: "t-row" },
+        h("i", { class: "key", style: `background:${sr.color}` }),
+        h("strong", null, v == null ? (sr.nullText || "—") : fmt(v)),
+        h("span", null, sr.name)));
+    });
+    tip.hidden = false;
+    const tw = tip.offsetWidth;
+    let left = x(i) + 12;
+    if (left + tw > width) left = x(i) - tw - 12;
+    tip.style.left = Math.max(0, left) + "px";
+    tip.style.top = m.t + "px";
+  };
+  const hide = () => { cross.setAttribute("visibility", "hidden"); dots.forEach((d) => d.setAttribute("visibility", "hidden")); tip.hidden = true; };
+  hit.addEventListener("pointermove", (e) => {
+    const rect = svg.getBoundingClientRect();
+    const px = ((e.clientX - rect.left) / rect.width) * width;
+    show(Math.round(((px - m.l) / iw) * (n - 1)));
+  });
+  hit.addEventListener("pointerleave", hide);
+  hit.addEventListener("focus", () => show(n - 1));
+  hit.addEventListener("blur", hide);
+  hit.addEventListener("keydown", (e) => {
+    const i = Number(host.dataset.idx ?? n - 1);
+    if (e.key === "ArrowLeft") { show(i - 1); e.preventDefault(); }
+    if (e.key === "ArrowRight") { show(i + 1); e.preventDefault(); }
+  });
+}
+
+function sparkline(values, { invert = false, color = "var(--series-1)", width = 92, height = 26 } = {}) {
+  const pts = values.map((v, i) => [v, i]).filter(([v]) => v != null);
+  const svg = s("svg", { class: "spark", width, height, viewBox: `0 0 ${width} ${height}`, "aria-hidden": "true" });
+  if (pts.length < 2) return svg;
+  const vals = pts.map(([v]) => v);
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  if (hi === lo) { hi += 1; lo -= 1; }
+  const pad = 4;
+  const x = (i) => pad + (i / (values.length - 1)) * (width - pad * 2);
+  const y = (v) => {
+    const t = (v - lo) / (hi - lo);
+    return invert ? pad + t * (height - pad * 2) : height - pad - t * (height - pad * 2);
+  };
+  const d = pts.map(([v, i], k) => `${k ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  svg.append(s("path", { d, fill: "none", stroke: color, "stroke-width": 1.5, "stroke-linejoin": "round", "stroke-linecap": "round", opacity: 0.85 }));
+  const [lv, li] = pts[pts.length - 1];
+  svg.append(s("circle", { cx: x(li), cy: y(lv), r: 2.5, fill: color }));
+  return svg;
+}
+
+function legend(series) {
+  return h("div", { class: "legend" }, series.map((sr) => h("span", null, h("i", { class: "key", style: `background:${sr.color}` }), sr.name)));
+}
+
+/* ---------------- domain logic ---------------- */
+
+const VITALS = [
+  { key: "lcp_ms", name: "Largest Contentful Paint", short: "LCP", good: 2500, poor: 4000, fmt: (v) => (v / 1000).toFixed(2) + " s", goodText: "Good ≤ 2.5 s" },
+  { key: "inp_ms", name: "Interaction to Next Paint", short: "INP", good: 200, poor: 500, fmt: (v) => Math.round(v) + " ms", goodText: "Good ≤ 200 ms" },
+  { key: "cls", name: "Cumulative Layout Shift", short: "CLS", good: 0.1, poor: 0.25, fmt: (v) => v.toFixed(2), goodText: "Good ≤ 0.1" },
+  { key: "ttfb_ms", name: "Time to First Byte", short: "TTFB", good: 800, poor: 1800, fmt: (v) => Math.round(v) + " ms", goodText: "Good ≤ 800 ms" },
+];
+const rating = (vt, v) => v == null ? null : v <= vt.good ? "good" : v <= vt.poor ? "warning" : "critical";
+const RATING_TEXT = { good: "Good", warning: "Needs work", critical: "Poor" };
+
+function avgVitals(rows) {
+  const out = {};
+  for (const vt of [...VITALS, { key: "page_load_ms" }]) {
+    const pts = rows.filter((r) => r[vt.key] != null);
+    const w = pts.reduce((t, r) => t + (r.samples || 1), 0);
+    out[vt.key] = w ? pts.reduce((t, r) => t + r[vt.key] * (r.samples || 1), 0) / w : null;
+  }
+  return out;
+}
+
+/** Latest position and the position at the start of the window for one rank series. */
+function rankSummary(points) {
+  const pts = points || [];
+  const latest = pts.length ? pts[pts.length - 1].position : null;
+  const first = pts.length ? pts[0].position : null;
+  return { latest, first, has: pts.length > 0 };
+}
+function rankChange({ latest, first, has }) {
+  if (!has) return h("span", { class: "delta flat" }, "waiting");
+  if (latest == null && first == null) return h("span", { class: "delta flat" }, "not ranking");
+  if (first == null) return h("span", { class: "delta up" }, "New");
+  if (latest == null) return h("span", { class: "delta down" }, "Lost");
+  const diff = first - latest;
+  if (!diff) return h("span", { class: "delta flat" }, "→ 0");
+  return h("span", { class: `delta ${diff > 0 ? "up" : "down"}`, title: `Was ${first}` }, `${diff > 0 ? "↑" : "↓"} ${Math.abs(diff)}`);
+}
+function posCell(p) {
+  return h("span", { class: `pos${p != null && p <= 3 ? " top3" : ""}`, title: p == null ? "Not found in the results checked" : null }, p == null ? "—" : String(p));
+}
+
+/** Things worth a look, worked out from the data plus issues found during sync. */
+function findIssues(d) {
+  const out = [];
+  const last = d.uptime.last;
+  if (last && !last.ok) out.push({ severity: "critical", kind: "uptime", message: `Website isn't responding (${last.status_code ? "HTTP " + last.status_code : last.error || "no response"})`, url: `https://${d.site.domain}/` });
+  const checks = sum(d.uptime.daily, "checks"), up = sum(d.uptime.daily, "up");
+  if (checks && up / checks < 0.995) out.push({ severity: "warning", kind: "uptime", message: `Uptime was ${fmtPct(up / checks, 2)} over this period` });
+
+  const v = avgVitals(d.vitals);
+  for (const vt of VITALS) {
+    const r = rating(vt, v[vt.key]);
+    if (r === "critical") out.push({ severity: "warning", kind: "speed", message: `${vt.name} is slow on real visits (${vt.fmt(v[vt.key])})` });
+  }
+
+  const recent = d.gsc.filter((r) => r.date >= isoDate(-9));
+  const before = d.gsc.filter((r) => r.date < isoDate(-9) && r.date >= isoDate(-16));
+  const c1 = sum(recent, "clicks"), c0 = sum(before, "clicks");
+  if (c0 >= 20 && c1 < c0 * 0.7) out.push({ severity: "warning", kind: "search", message: `Google clicks fell ${Math.round((1 - c1 / c0) * 100)}% week on week` });
+
+  for (const k of d.keywords) {
+    const { latest, first } = rankSummary(k.organic);
+    if (first != null && first <= 10 && (latest == null || latest > 10)) {
+      out.push({ severity: "warning", kind: "ranking", message: `“${k.keyword}” dropped off Google page one (was ${first})` });
+    } else if (first != null && latest != null && latest - first >= 3) {
+      out.push({ severity: "info", kind: "ranking", message: `“${k.keyword}” slipped from ${first} to ${latest}` });
+    }
+  }
+  const order = { critical: 0, warning: 1, info: 2 };
+  return [...out, ...d.issues].sort((a, b) => order[a.severity] - order[b.severity]);
+}
+
+/* ---------------- backends ---------------- */
+
+async function call(method, path, body) {
+  const res = await fetch(path, {
+    method,
+    headers: { accept: "application/json", ...(body ? { "content-type": "application/json" } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Request failed (HTTP ${res.status})`);
+  return data;
+}
+const liveBackend = {
+  mode: "live",
+  sites: (days) => call("GET", `api/sites?days=${days}`),
+  dashboard: (id, days) => call("GET", `api/sites/${id}/dashboard?days=${days}`),
+  createSite: (data) => call("POST", "api/sites", data),
+  updateSite: (id, data) => call("PUT", `api/sites/${id}`, data),
+  deleteSite: (id) => call("DELETE", `api/sites/${id}`),
+  addKeywords: (id, keywords) => call("POST", `api/sites/${id}/keywords`, { keywords }),
+  deleteKeyword: (id) => call("DELETE", `api/keywords/${id}`),
+  sync: (id) => call("POST", `api/sites/${id}/sync`),
+};
+
+/* Example data for previewing the dashboard before it is connected. */
+function makeDemoBackend() {
+  let seed = 20261001;
+  const rand = () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const HIST = 180;
+  const days = dateRange(HIST);
+
+  function rankWalk(start, end, { gaps = 0, maxPos = 30 } = {}) {
+    let p = start;
+    return days.slice(-91).map((date, i, arr) => {
+      const target = start + ((end - start) * i) / (arr.length - 1);
+      p = p + (target - p) * 0.35 + (rand() - 0.5) * 1.6;
+      let pos = Math.max(1, Math.round(p));
+      if (i === arr.length - 1) pos = end;
+      if (pos > maxPos || (gaps && i < gaps)) return { date, position: null };
+      return { date, position: pos };
+    });
+  }
+
+  const blueprints = [
+    {
+      site: { id: 1, name: "Custom Showers", domain: "customshowers.example", gsc_property: "sc-domain:customshowers.example", default_location: "London,England,United Kingdom", business_name: "Custom Showers" },
+      visits: 140, growth: 0.45,
+      keywords: [
+        ["frameless shower doors fulham", "Fulham", 5, 3, 4, 2],
+        ["frameless showers putney", "Putney", 10, 6, 9, 4],
+        ["glass shower screens chelsea", "Chelsea", 8, 9, 7, 8],
+        ["bespoke showers hammersmith", "Hammersmith", 8, 5, 6, 3],
+        ["frameless showers clapham", "Clapham", 18, 12, 22, 14],
+        ["frameless showers london", "London", 13, 8, null, null],
+        ["bespoke shower screens london", "London", 19, 14, null, null],
+        ["glass shower screens london", "London", 12, 11, null, null],
+      ],
+      pages: ["/", "/frameless-showers/", "/shower-screens/", "/areas/fulham/", "/areas/putney/", "/gallery/", "/contact/", "/areas/clapham/"],
+      vitals: { lcp_ms: 2100, inp_ms: 140, cls: 0.04, ttfb_ms: 420, fcp_ms: 1300, page_load_ms: 2600 },
+      issues: [{ severity: "warning", kind: "sitemap", message: "Sitemap has 2 warning(s)", url: "https://customshowers.example/sitemap.xml" }],
+      uptimeDip: 12,
+    },
+    {
+      site: { id: 2, name: "Harbour Kitchens", domain: "harbourkitchens.example", gsc_property: "https://harbourkitchens.example/", default_location: "Brighton,England,United Kingdom", business_name: "Harbour Kitchens" },
+      visits: 95, growth: 0.15,
+      keywords: [
+        ["kitchen fitters hove", "Hove", 7, 4, 3, 2],
+        ["bespoke kitchens brighton", "Brighton", 11, 13, 9, 11],
+        ["kitchen installation shoreham", "Shoreham", 9, 12, 12, 15],
+        ["kitchen worktops lewes", "Lewes", 22, 17, null, null],
+      ],
+      pages: ["/", "/kitchens/", "/worktops/", "/projects/", "/contact/"],
+      vitals: { lcp_ms: 3400, inp_ms: 260, cls: 0.12, ttfb_ms: 980, fcp_ms: 1900, page_load_ms: 4100 },
+      issues: [{ severity: "critical", kind: "broken-page", message: "Page returns HTTP 404", url: "https://harbourkitchens.example/projects/shoreham-oak/" }],
+      clickDrop: true,
+    },
+    {
+      site: { id: 3, name: "Northgate Roofing", domain: "northgateroofing.example", gsc_property: "sc-domain:northgateroofing.example", default_location: "Leeds,England,United Kingdom", business_name: "Northgate Roofing" },
+      visits: 60, growth: 0.3,
+      keywords: [
+        ["roofers headingley", "Headingley", 6, 2, 3, 1],
+        ["flat roof repair leeds", "Leeds", 15, 9, 8, 6],
+        ["emergency roofer horsforth", "Horsforth", 4, 3, 2, 2],
+      ],
+      pages: ["/", "/flat-roofs/", "/repairs/", "/areas/headingley/", "/contact/"],
+      vitals: { lcp_ms: 1800, inp_ms: 90, cls: 0.02, ttfb_ms: 310, fcp_ms: 1000, page_load_ms: 2100 },
+      issues: [],
+    },
+  ];
+
+  let nextKw = 1;
+  const sites = blueprints.map((b) => {
+    const traffic = days.map((date, i) => {
+      const dow = new Date(date + "T00:00:00Z").getUTCDay();
+      const trend = 1 + b.growth * (i / HIST);
+      const weekly = dow === 0 || dow === 6 ? 0.72 : 1.05;
+      const visits = Math.round(b.visits * trend * weekly * (0.85 + rand() * 0.3));
+      return { date, visits, pageviews: Math.round(visits * (1.6 + rand() * 0.6)) };
+    });
+    const gsc = days.slice(0, -2).map((date, i) => {
+      const trend = 1 + b.growth * 1.3 * (i / HIST);
+      const dow = new Date(date + "T00:00:00Z").getUTCDay();
+      const drop = b.clickDrop && i > HIST - 10 ? 0.55 : 1;
+      const impressions = Math.round(b.visits * 9 * trend * (dow === 0 || dow === 6 ? 0.8 : 1) * (0.85 + rand() * 0.3));
+      const clicks = Math.round(impressions * (0.03 + rand() * 0.015) * drop);
+      return { date, clicks, impressions, ctr: clicks / impressions, position: +(16 - 6 * (i / HIST) + (rand() - 0.5) * 1.5).toFixed(1) };
+    });
+    const keywords = b.keywords.map(([keyword, area, o0, o1, m0, m1]) => ({
+      id: nextKw++, site_id: b.site.id, keyword, area, location: b.site.default_location, track_maps: m0 != null,
+      url: `https://${b.site.domain}${b.pages[1]}`,
+      gsc_position: +(o1 + (rand() - 0.3) * 2).toFixed(1),
+      organic: rankWalk(o0, o1),
+      maps: m0 == null ? [] : rankWalk(m0, m1, { maxPos: 20 }),
+    }));
+    const queries = [
+      ...keywords.map((k) => k.keyword),
+      ...["near me", "prices", "cost", "reviews", "installers"].map((w) => `${b.site.name.toLowerCase().split(" ")[1]} ${w}`),
+      b.site.name.toLowerCase(),
+    ].map((q, i) => {
+      const impressions = Math.round((900 / (i + 1.5)) * (0.7 + rand() * 0.6));
+      const clicks = Math.round(impressions * (q === b.site.name.toLowerCase() ? 0.42 : 0.02 + rand() * 0.06));
+      return { query: q, clicks, impressions, ctr: clicks / impressions, position: +(2 + rand() * 14).toFixed(1) };
+    }).sort((a, z) => z.clicks - a.clicks);
+    const brokenUrl = b.issues.find((i) => i.kind === "broken-page")?.url;
+    const pages = [...b.pages.map((p) => `https://${b.site.domain}${p}`), ...(brokenUrl ? [brokenUrl] : [])].map((page, i) => {
+      const impressions = Math.round((2400 / (i + 1)) * (0.7 + rand() * 0.6));
+      const clicks = Math.round(impressions * (0.025 + rand() * 0.04));
+      return { page, clicks, impressions, ctr: clicks / impressions, position: +(3 + rand() * 12).toFixed(1), status_code: page === brokenUrl ? 404 : 200, checked_at: new Date().toISOString() };
+    });
+    const vitals = days.map((date) => {
+      const row = { date, samples: 40 + Math.round(rand() * 80) };
+      for (const [k, v] of Object.entries(b.vitals)) row[k] = k === "cls" ? +(v * (0.8 + rand() * 0.4)).toFixed(3) : Math.round(v * (0.85 + rand() * 0.3));
+      return row;
+    });
+    const uptime = days.map((date, i) => {
+      const checks = 144, down = b.uptimeDip && i === HIST - b.uptimeDip ? 9 : rand() < 0.04 ? 1 : 0;
+      return { date, checks, up: checks - down, avg_ms: 180 + Math.round(rand() * 120) };
+    });
+    const synced = new Date(Date.now() - (40 + b.site.id * 70) * 60000).toISOString();
+    return {
+      site: { ...b.site, cf_site_tag: null, cf_zone_id: null, created_at: synced, last_synced_at: synced, last_sync_error: null },
+      traffic, gsc, keywords, queries, pages, vitals, uptime,
+      issues: b.issues.map((i) => ({ ...i, detected_at: synced })),
+      lastCheck: { checked_at: new Date(Date.now() - 4 * 60000).toISOString(), ok: 1, status_code: 200, response_ms: 210 },
+    };
+  });
+
+  const clip = (rows, from) => rows.filter((r) => r.date >= from);
+  const find = (id) => { const x = sites.find((d) => d.site.id === Number(id)); if (!x) throw new Error("Site not found"); return x; };
+  const delay = (v) => new Promise((r) => setTimeout(() => r(structuredClone(v)), 120));
+  const readOnly = () => Promise.reject(new Error("This is example data. Deploy the worker to add your own websites."));
+
+  return {
+    mode: "demo",
+    sites(daysN) {
+      const from = isoDate(-daysN * 2 + 1), upFrom = isoDate(-daysN + 1);
+      return delay({
+        days: daysN,
+        sites: sites.map((d) => ({
+          site: d.site,
+          traffic: clip(d.traffic, from),
+          gsc: clip(d.gsc, from),
+          ranks: d.keywords.map((k) => ({ id: k.id, keyword: k.keyword, area: k.area, organic: k.organic.at(-1)?.position ?? null, maps: k.maps.at(-1)?.position ?? null })),
+          uptime: { checks: sum(clip(d.uptime, upFrom), "checks"), up: sum(clip(d.uptime, upFrom), "up") },
+          issues: Object.entries(d.issues.reduce((t, i) => ((t[i.severity] = (t[i.severity] || 0) + 1), t), {})).map(([severity, n]) => ({ severity, n })),
+        })),
+      });
+    },
+    dashboard(id, daysN) {
+      const d = find(id);
+      const from = isoDate(-daysN * 2 + 1), cur = isoDate(-daysN + 1), rk = isoDate(-daysN);
+      return delay({
+        days: daysN, site: d.site,
+        configured: { cloudflare: true, searchConsole: true, rankTracking: true },
+        traffic: clip(d.traffic, from), vitals: clip(d.vitals, cur), gsc: clip(d.gsc, from),
+        keywords: d.keywords.map((k) => ({ ...k, organic: clip(k.organic, rk), maps: clip(k.maps, rk) })),
+        queries: d.queries, pages: d.pages, issues: d.issues,
+        uptime: { daily: clip(d.uptime, cur), last: d.lastCheck },
+      });
+    },
+    createSite: readOnly, updateSite: readOnly, deleteSite: readOnly, addKeywords: readOnly, deleteKeyword: readOnly,
+    sync: () => delay({ errors: [] }),
+  };
+}
+
+/* ---------------- app state ---------------- */
+
+const state = { backend: null, days: 30, view: { name: "overview" }, cache: null, selectedKeyword: null, gscMetric: "clicks" };
+try { const d = Number(localStorage.getItem("seo.days")); if ([7, 30, 90].includes(d)) state.days = d; } catch {}
+
+const app = document.getElementById("app");
+
+function setRangeButtons() {
+  for (const b of document.querySelectorAll("#range button")) b.setAttribute("aria-pressed", String(Number(b.dataset.days) === state.days));
+}
+document.getElementById("range").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-days]");
+  if (!b) return;
+  state.days = Number(b.dataset.days);
+  try { localStorage.setItem("seo.days", String(state.days)); } catch {}
+  setRangeButtons();
+  render();
+});
+
+function go(view) {
+  state.view = view;
+  state.selectedKeyword = null;
+  try { history.replaceState(null, "", view.name === "site" ? `#site-${view.id}` : "#"); } catch {}
+  render();
+  window.scrollTo({ top: 0 });
+}
+
+let renderToken = 0;
+async function render() {
+  const token = ++renderToken;
+  document.body.classList.add("loading");
+  try {
+    if (state.view.name === "site") {
+      const data = await state.backend.dashboard(state.view.id, state.days);
+      if (token !== renderToken) return;
+      app.replaceChildren(...siteView(data));
+    } else {
+      const data = await state.backend.sites(state.days);
+      if (token !== renderToken) return;
+      app.replaceChildren(...overviewView(data));
+    }
+  } catch (err) {
+    if (token !== renderToken) return;
+    app.replaceChildren(h("div", { class: "panel" }, h("p", { class: "notice error" }, err.message),
+      h("button", { class: "btn", type: "button", onclick: () => go({ name: "overview" }) }, "Back to all websites")));
+  } finally {
+    if (token === renderToken) document.body.classList.remove("loading");
+  }
+}
+
+/* ---------------- overview ---------------- */
+
+function overviewView({ days, sites }) {
+  const rows = sites.map((x) => {
+    const t = splitPeriods(x.traffic, days), g = splitPeriods(x.gsc, days);
+    const positions = x.ranks.map((r) => r.organic).filter((p) => p != null);
+    return {
+      x,
+      visits: sum(t.current, "visits"), visitsPrev: t.previous.length ? sum(t.previous, "visits") : null,
+      clicks: sum(g.current, "clicks"), clicksPrev: g.previous.length ? sum(g.previous, "clicks") : null,
+      avgPos: positions.length ? positions.reduce((a, b) => a + b, 0) / positions.length : null,
+      top3: positions.filter((p) => p <= 3).length, top10: positions.filter((p) => p <= 10).length, tracked: x.ranks.length,
+      uptime: x.uptime.checks ? x.uptime.up / x.uptime.checks : null,
+      critical: x.issues.find((i) => i.severity === "critical")?.n || 0,
+      warnings: x.issues.find((i) => i.severity === "warning")?.n || 0,
+      spark: dateRange(days).map((d) => x.traffic.find((r) => r.date === d)?.visits ?? null),
+    };
+  });
+  const total = (k) => rows.reduce((t, r) => t + (r[k] || 0), 0);
+  const prevTotal = (k) => rows.every((r) => r[k] == null) ? null : total(k);
+  const allTracked = total("tracked"), allTop3 = total("top3");
+
+  const head = h("div", { class: "page-head" },
+    h("div", null, h("h1", null, "All websites"),
+      h("div", { class: "meta" }, `${sites.length} ${sites.length === 1 ? "site" : "sites"} · last ${days} days`)),
+    h("div", { class: "actions" },
+      h("button", { class: "btn primary", type: "button", onclick: () => { addPanel.hidden = !addPanel.hidden; } }, "Add website")));
+
+  const addPanel = h("section", { class: "panel", hidden: true }, h("h2", { style: "margin-bottom:12px" }, "Add a website"), siteForm(null, async (data) => {
+    const site = await state.backend.createSite(data);
+    go({ name: "site", id: site.id });
+  }));
+
+  const tiles = h("div", { class: "tiles" },
+    tile("Visitors", fmtCompact(total("visits")), delta(total("visits"), prevTotal("visitsPrev"))),
+    tile("Google clicks", fmtCompact(total("clicks")), delta(total("clicks"), prevTotal("clicksPrev"))),
+    tile("Keywords in Google top 3", `${allTop3} of ${allTracked}`, h("span", { class: "delta flat" }, `${total("top10")} on page one`)),
+    tile("Sites needing attention", String(rows.filter((r) => r.critical || (r.uptime != null && r.uptime < 0.995)).length),
+      h("span", { class: "delta flat" }, `${total("critical")} critical · ${total("warnings")} ${total("warnings") === 1 ? "warning" : "warnings"}`)));
+
+  if (!sites.length) {
+    return [head, addPanel, h("section", { class: "panel" }, h("h2", null, "No websites yet"),
+      h("p", { class: "secondary" }, "Add your first website with its Search Console property and Cloudflare Web Analytics site tag. Data appears after the next hourly sync, or press Sync now on the site page."))];
+  }
+
+  const table = h("table", null,
+    h("thead", null, h("tr", null,
+      h("th", null, "Website"), h("th", { class: "r" }, "Visitors"), h("th", { class: "r hide-sm" }, "Google clicks"),
+      h("th", { class: "r" }, "Avg position"), h("th", { class: "r hide-sm" }, "Top 3 / top 10"), h("th", { class: "r hide-sm" }, "Uptime"),
+      h("th", null, "Status"), h("th", { class: "hide-sm" }, `Visitors, ${days} days`))),
+    h("tbody", null, rows.map((r) => h("tr", {
+      class: "clickable", tabindex: 0,
+      onclick: () => go({ name: "site", id: r.x.site.id }),
+      onkeydown: (e) => { if (e.key === "Enter") go({ name: "site", id: r.x.site.id }); },
+    },
+      h("td", { class: "site-cell" }, h("b", null, r.x.site.name), h("span", { class: "mono muted" }, r.x.site.domain)),
+      h("td", { class: "r" }, fmtInt(r.visits), h("br"), delta(r.visits, r.visitsPrev)),
+      h("td", { class: "r hide-sm" }, fmtInt(r.clicks), h("br"), delta(r.clicks, r.clicksPrev)),
+      h("td", { class: "r" }, h("span", { class: "pos" }, fmtPos(r.avgPos, 1)), h("br"), h("span", { class: "muted", style: "font-size:0.8rem" }, `${r.tracked} keywords`)),
+      h("td", { class: "r hide-sm" }, `${r.top3} / ${r.top10}`),
+      h("td", { class: "r hide-sm" }, fmtPct(r.uptime, 2)),
+      h("td", null, statusPill(r)),
+      h("td", { class: "hide-sm" }, sparkline(r.spark))))));
+
+  return [head, addPanel, tiles, h("section", { class: "panel flush" }, h("div", { class: "table-scroll" }, table))];
+}
+
+function statusPill(r) {
+  if (r.critical) return h("span", { class: "pill critical" }, `${r.critical} critical`);
+  if (r.uptime != null && r.uptime < 0.995) return h("span", { class: "pill warning" }, "Downtime");
+  if (r.warnings) return h("span", { class: "pill warning" }, `${r.warnings} ${r.warnings === 1 ? "warning" : "warnings"}`);
+  return h("span", { class: "pill good" }, "Healthy");
+}
+
+function tile(label, value, foot, spark) {
+  return h("div", { class: "tile" },
+    h("span", { class: "label" }, label),
+    h("span", { class: "value" }, value),
+    h("div", { class: "foot" }, foot || h("span"), spark || null));
+}
+
+/* ---------------- site view ---------------- */
+
+function siteView(d) {
+  const { site, days } = d;
+  const dates = dateRange(days);
+  const byDate = (rows, key) => { const m = new Map(rows.map((r) => [r.date, r[key]])); return dates.map((x) => m.has(x) ? m.get(x) : null); };
+  const t = splitPeriods(d.traffic, days), g = splitPeriods(d.gsc, days);
+  const issues = findIssues(d);
+  const checks = sum(d.uptime.daily, "checks"), up = sum(d.uptime.daily, "up");
+  const pos = weightedPosition(g.current), posPrev = weightedPosition(g.previous);
+
+  const syncBtn = h("button", { class: "btn", type: "button", onclick: async () => {
+    syncBtn.disabled = true; syncBtn.textContent = "Syncing…";
+    try {
+      const r = await state.backend.sync(site.id);
+      if (r.errors?.length) showBanner(`Synced with problems: ${r.errors.join(" · ")}`);
+      render();
+    } catch (err) { showBanner(err.message); syncBtn.disabled = false; syncBtn.textContent = "Sync now"; }
+  } }, "Sync now");
+
+  const head = h("div", { class: "page-head" },
+    h("div", { style: "min-width:0" },
+      h("button", { class: "link-btn", type: "button", onclick: () => go({ name: "overview" }) }, "← All websites"),
+      h("h1", { style: "margin-top:6px" }, site.name),
+      h("div", { class: "meta" },
+        h("a", { class: "mono", href: `https://${site.domain}/`, target: "_blank", rel: "noopener" }, site.domain),
+        h("span", null, `Synced ${timeAgo(site.last_synced_at)}`),
+        site.default_location ? h("span", null, site.default_location.split(",")[0]) : null)),
+    h("div", { class: "actions" }, syncBtn,
+      h("button", { class: "btn", type: "button", onclick: () => { const el = document.getElementById("settings"); el.open = true; el.scrollIntoView({ behavior: "smooth" }); } }, "Settings")));
+
+  const tiles = h("div", { class: "tiles" },
+    tile("Visitors", fmtCompact(sum(t.current, "visits")), delta(sum(t.current, "visits"), t.previous.length ? sum(t.previous, "visits") : null), sparkline(byDate(d.traffic, "visits"))),
+    tile("Page views", fmtCompact(sum(t.current, "pageviews")), delta(sum(t.current, "pageviews"), t.previous.length ? sum(t.previous, "pageviews") : null)),
+    tile("Google clicks", fmtCompact(sum(g.current, "clicks")), delta(sum(g.current, "clicks"), g.previous.length ? sum(g.previous, "clicks") : null), sparkline(byDate(d.gsc, "clicks"))),
+    tile("Google impressions", fmtCompact(sum(g.current, "impressions")), delta(sum(g.current, "impressions"), g.previous.length ? sum(g.previous, "impressions") : null)),
+    tile("Avg Google position", fmtPos(pos, 1), delta(pos, posPrev, { lowerIsBetter: true, absolute: true, digits: 1 })),
+    tile("Uptime", checks ? fmtPct(up / checks, 2) : "—", h("span", { class: "delta flat" }, d.uptime.last ? `${d.uptime.last.response_ms ?? "—"} ms last check` : "no checks yet")));
+
+  const attention = h("section", { class: "band" },
+    h("div", { class: "band-head" }, h("h2", null, "Needs attention"),
+      issues.length ? h("span", { class: "muted", style: "font-size:0.85rem" }, `${issues.length} ${issues.length === 1 ? "item" : "items"}`) : null),
+    h("div", { class: "panel flush" }, issues.length
+      ? h("ul", { class: "issues" }, issues.map((i) => h("li", null,
+          h("span", { class: `pill ${i.severity}` }, i.severity === "critical" ? "Critical" : i.severity === "warning" ? "Warning" : "Info"),
+          h("div", { class: "what" }, i.message, i.url ? h("small", { class: "mono" }, i.url) : null))))
+      : h("div", { class: "empty" }, h("span", { class: "pill good" }, "All clear"), "  Nothing needs fixing right now.")));
+
+  return [head, tiles, attention, rankingsBand(d), trafficBand(d, dates, byDate), searchBand(d, dates, byDate), speedBand(d), uptimeBand(d, dates), settingsBand(d)];
+}
+
+function rankingsBand(d) {
+  const kws = d.keywords;
+  const band = h("section", { class: "band" },
+    h("div", { class: "band-head" },
+      h("div", null, h("h2", null, "Local rankings"),
+        h("p", null, "Where the site appears in Google and Google Maps for each area, checked daily from that location. Change compares today with the start of the period."))));
+  if (!kws.length) {
+    band.append(h("div", { class: "panel empty" }, "No keywords tracked yet. Add them in Settings below, one area per line."));
+    return band;
+  }
+  if (!state.selectedKeyword || !kws.some((k) => k.id === state.selectedKeyword)) state.selectedKeyword = kws[0].id;
+
+  const chartHost = h("div");
+  const chartHead = h("div", { class: "chart-title" });
+  const drawChart = () => {
+    const k = kws.find((x) => x.id === state.selectedKeyword);
+    const dates = [...new Set([...k.organic, ...k.maps].map((p) => p.date))].sort();
+    const val = (pts) => { const m = new Map(pts.map((p) => [p.date, p.position])); return dates.map((x) => m.has(x) ? m.get(x) : null); };
+    const series = [{ name: "Google search", color: "var(--series-1)", values: val(k.organic), nullText: "Not ranking" }];
+    if (k.track_maps) series.push({ name: "Google Maps", color: "var(--series-2)", values: val(k.maps), nullText: "Not ranking" });
+    chartHead.replaceChildren(h("h3", null, "Position for ", h("span", { class: "mono" }, k.keyword)), series.length > 1 ? legend(series) : null);
+    lineChart(chartHost, { dates, series, invert: true, fmt: (v) => "#" + v, height: 200, label: `Ranking history for ${k.keyword}`, emptyText: "The first rank check hasn't come back yet. Results usually arrive within a few minutes of a sync." });
+  };
+
+  const rows = kws.map((k) => {
+    const o = rankSummary(k.organic), mp = rankSummary(k.maps);
+    const tr = h("tr", {
+      class: "clickable", tabindex: 0, "aria-selected": String(k.id === state.selectedKeyword),
+      onclick: () => select(), onkeydown: (e) => { if (e.key === "Enter") select(); },
+    },
+      h("td", null, k.area || "—"),
+      h("td", { class: "mono" }, k.keyword),
+      h("td", { class: "r" }, posCell(o.latest)),
+      h("td", { class: "r" }, rankChange(o)),
+      h("td", { class: "r" }, k.track_maps ? posCell(mp.latest) : h("span", { class: "muted" }, "off")),
+      h("td", { class: "r hide-sm" }, k.gsc_position == null ? "—" : k.gsc_position.toFixed(1)),
+      h("td", { class: "hide-sm" }, sparkline(k.organic.map((p) => p.position), { invert: true })));
+    function select() {
+      state.selectedKeyword = k.id;
+      for (const r of tr.parentElement.children) r.setAttribute("aria-selected", "false");
+      tr.setAttribute("aria-selected", "true");
+      drawChart();
+    }
+    return tr;
+  });
+
+  band.append(h("div", { class: "panel flush" }, h("div", { class: "table-scroll" }, h("table", null,
+    h("thead", null, h("tr", null, h("th", null, "Area"), h("th", null, "Keyword"), h("th", { class: "r" }, "Google"),
+      h("th", { class: "r" }, "Change"), h("th", { class: "r" }, "Maps"), h("th", { class: "r hide-sm", title: "Average position reported by Search Console over 28 days" }, "Search Console"), h("th", { class: "hide-sm" }, "Trend"))),
+    h("tbody", null, rows)))));
+  band.append(h("div", { class: "panel" }, chartHead, chartHost));
+  requestAnimationFrame(drawChart);
+  return band;
+}
+
+function trafficBand(d, dates, byDate) {
+  const host = h("div");
+  const band = h("section", { class: "band" },
+    h("div", { class: "band-head" }, h("div", null, h("h2", null, "Visitors"),
+      h("p", null, "Daily visits from Cloudflare Web Analytics. Bots are excluded."))),
+    h("div", { class: "panel" }, host));
+  requestAnimationFrame(() => lineChart(host, { dates, series: [{ name: "Visitors", color: "var(--series-1)", values: byDate(d.traffic, "visits") }], label: "Daily visitors",
+    emptyText: d.site.cf_site_tag || d.site.cf_zone_id ? "No visits recorded yet." : "Add a Cloudflare Web Analytics site tag in Settings to see visitors." }));
+  return band;
+}
+
+function searchBand(d, dates, byDate) {
+  const host = h("div");
+  const metrics = { clicks: ["Clicks", fmtInt], impressions: ["Impressions", fmtInt], position: ["Avg position", (v) => v.toFixed(1)] };
+  const seg = h("div", { class: "seg", role: "group", "aria-label": "Search metric" },
+    Object.entries(metrics).map(([k, [label]]) => h("button", { type: "button", "aria-pressed": String(state.gscMetric === k), onclick: (e) => {
+      state.gscMetric = k;
+      for (const b of seg.children) b.setAttribute("aria-pressed", String(b === e.currentTarget));
+      draw();
+    } }, label)));
+  const draw = () => {
+    const [label, fmt] = metrics[state.gscMetric];
+    lineChart(host, { dates, series: [{ name: label, color: "var(--series-1)", values: byDate(d.gsc, state.gscMetric) }], invert: state.gscMetric === "position", fmt, label: `Google ${label} per day`,
+      emptyText: d.site.gsc_property ? "Search Console data usually lags two to three days." : "Add the Search Console property in Settings to see Google search data." });
+  };
+  requestAnimationFrame(draw);
+
+  const queries = d.queries.slice(0, 12);
+  const pages = d.pages.slice(0, 12);
+  const statusPillFor = (code) => code == null ? h("span", { class: "muted" }, "—")
+    : code < 300 ? h("span", { class: "pill good" }, String(code))
+    : code < 400 ? h("span", { class: "pill warning" }, String(code))
+    : h("span", { class: "pill critical" }, String(code));
+
+  return h("section", { class: "band" },
+    h("div", { class: "band-head" }, h("div", null, h("h2", null, "Google Search"),
+      h("p", null, "From Google Search Console. Position is the average across every search the site appeared in.")), seg),
+    h("div", { class: "panel" }, host),
+    h("div", { class: "two-col" },
+      h("div", { class: "panel flush" }, h("h3", { style: "padding:12px 12px 0" }, "Top searches, last 28 days"),
+        queries.length ? h("div", { class: "table-scroll" }, h("table", null,
+          h("thead", null, h("tr", null, h("th", null, "Search"), h("th", { class: "r" }, "Clicks"), h("th", { class: "r" }, "Impr."), h("th", { class: "r" }, "Pos."))),
+          h("tbody", null, queries.map((q) => h("tr", null, h("td", { class: "mono" }, q.query), h("td", { class: "r" }, fmtInt(q.clicks)), h("td", { class: "r" }, fmtInt(q.impressions)), h("td", { class: "r" }, q.position.toFixed(1)))))))
+          : h("div", { class: "empty" }, "No search data yet.")),
+      h("div", { class: "panel flush" }, h("h3", { style: "padding:12px 12px 0" }, "Pages getting Google traffic"),
+        pages.length ? h("div", { class: "table-scroll" }, h("table", null,
+          h("thead", null, h("tr", null, h("th", null, "Page"), h("th", { class: "r" }, "Clicks"), h("th", { class: "r" }, "Pos."), h("th", null, "Status"))),
+          h("tbody", null, pages.map((p) => h("tr", null, h("td", { class: "mono cell-url", title: p.page }, pathOf(p.page)), h("td", { class: "r" }, fmtInt(p.clicks)), h("td", { class: "r" }, p.position.toFixed(1)), h("td", null, statusPillFor(p.status_code)))))))
+          : h("div", { class: "empty" }, "No page data yet."))));
+}
+
+function speedBand(d) {
+  const v = avgVitals(d.vitals);
+  const cards = VITALS.map((vt) => {
+    const val = v[vt.key], r = rating(vt, val);
+    const scaleMax = vt.poor * 1.6;
+    return h("div", { class: "panel vital" },
+      h("span", { class: "secondary", style: "font-size:0.85rem" }, `${vt.name} (${vt.short})`),
+      h("span", { class: "value" }, val == null ? "—" : vt.fmt(val)),
+      h("div", { class: "meter", "aria-hidden": "true" }, h("i", { style: `flex:${vt.good}` }), h("i", { style: `flex:${vt.poor - vt.good}` }), h("i", { style: `flex:${scaleMax - vt.poor}` }),
+        val == null ? null : h("b", { style: `left:${Math.min(100, (val / scaleMax) * 100)}%` })),
+      h("div", { style: "display:flex;justify-content:space-between;gap:8px;align-items:center" },
+        r ? h("span", { class: `pill ${r}` }, RATING_TEXT[r]) : h("span", { class: "muted" }, "No data"),
+        h("span", { class: "muted", style: "font-size:0.78rem" }, vt.goodText)));
+  });
+  return h("section", { class: "band" },
+    h("div", { class: "band-head" }, h("div", null, h("h2", null, "Speed"),
+      h("p", null, `Core Web Vitals from real visitors (75th percentile). Median full page load: ${v.page_load_ms == null ? "—" : (v.page_load_ms / 1000).toFixed(1) + " s"}.`))),
+    h("div", { class: "vitals" }, cards));
+}
+
+function uptimeBand(d, dates) {
+  const m = new Map(d.uptime.daily.map((r) => [r.date, r]));
+  const checks = sum(d.uptime.daily, "checks"), up = sum(d.uptime.daily, "up");
+  const cells = dates.map((date) => {
+    const r = m.get(date);
+    if (!r) return h("i", { class: "none", title: `${fmtDay(date)}: no checks` });
+    const pct = r.up / r.checks;
+    const cls = pct >= 0.999 ? "" : pct >= 0.99 ? "warn" : "down";
+    return h("i", { class: cls, title: `${fmtDay(date)}: ${fmtPct(pct, 2)} up, ${r.checks - r.up} failed of ${r.checks} checks, avg ${r.avg_ms ?? "—"} ms` });
+  });
+  const last = d.uptime.last;
+  return h("section", { class: "band" },
+    h("div", { class: "band-head" }, h("div", null, h("h2", null, "Uptime"),
+      h("p", null, "Home page checked every 10 minutes. Each bar is one day; hover for detail."))),
+    h("div", { class: "panel", style: "display:grid;gap:10px" },
+      h("div", { class: "uptime-strip", role: "img", "aria-label": `Uptime ${checks ? fmtPct(up / checks, 2) : "unknown"} over ${dates.length} days` }, cells),
+      h("div", { class: "legend" },
+        h("span", null, h("strong", null, checks ? fmtPct(up / checks, 2) : "—"), " up"),
+        h("span", null, `${checks - up} failed checks`),
+        last ? h("span", null, `Last check ${timeAgo(last.checked_at)}: `, last.ok ? h("span", { class: "pill good" }, `Up · ${last.status_code}`) : h("span", { class: "pill critical" }, `Down · ${last.status_code || last.error}`)) : null,
+        h("span", { class: "muted" }, "Green ≥ 99.9% · amber ≥ 99% · red below"))));
+}
+
+/* ---------------- settings ---------------- */
+
+function field(id, label, value, hint, placeholder) {
+  return h("label", { class: "field", for: id }, label,
+    h("input", { type: "text", id, name: id.replace(/^f-/, ""), value: value || "", placeholder: placeholder || "" }),
+    hint ? h("small", null, hint) : null);
+}
+
+function siteForm(site, onSubmit) {
+  const p = site ? `f-${site.id}-` : "f-new-";
+  const msg = h("span", { class: "notice" });
+  const form = h("form", { class: "grid" },
+    field(`${p}name`, "Name", site?.name, null, "Custom Showers"),
+    field(`${p}domain`, "Domain", site?.domain, null, "customshowers.co.uk"),
+    field(`${p}gsc_property`, "Search Console property", site?.gsc_property, "sc-domain:example.co.uk or https://www.example.co.uk/", "sc-domain:customshowers.co.uk"),
+    field(`${p}cf_site_tag`, "Cloudflare Web Analytics site tag", site?.cf_site_tag, "Web Analytics → site → Manage site. 32 characters.", ""),
+    field(`${p}cf_zone_id`, "Cloudflare zone ID (optional)", site?.cf_zone_id, "Used for visitors when there's no site tag", ""),
+    field(`${p}default_location`, "Default rank location", site?.default_location, "DataForSEO location name", "London,England,United Kingdom"),
+    field(`${p}business_name`, "Google Business Profile name", site?.business_name, "Matches your Maps listing when it has no website link", "Custom Showers"),
+    h("div", { class: "form-foot" }, h("button", { class: "btn primary", type: "submit" }, site ? "Save changes" : "Add website"), msg));
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = {};
+    for (const k of ["name", "domain", "gsc_property", "cf_site_tag", "cf_zone_id", "default_location", "business_name"]) data[k] = form.querySelector(`#${p}${k}`).value;
+    msg.className = "notice"; msg.textContent = "Saving…";
+    try { await onSubmit(data); msg.className = "notice ok"; msg.textContent = "Saved"; }
+    catch (err) { msg.className = "notice error"; msg.textContent = err.message; }
+  });
+  return form;
+}
+
+function settingsBand(d) {
+  const { site } = d;
+  const kwMsg = h("span", { class: "notice" });
+  const textarea = h("textarea", { id: `kw-${site.id}`, placeholder: "frameless shower doors fulham | Fulham\nglass shower screens chelsea | Chelsea | Chelsea,England,United Kingdom" });
+  const addKw = h("form", { style: "display:grid;gap:8px" },
+    h("label", { class: "field", for: `kw-${site.id}` }, "Add keywords, one per line: keyword | area | location (optional)", textarea),
+    h("div", { class: "form-foot" }, h("button", { class: "btn primary", type: "submit" }, "Add keywords"), kwMsg));
+  addKw.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const keywords = textarea.value.split("\n").map((l) => l.split("|").map((x) => x.trim())).filter(([k]) => k)
+      .map(([keyword, area, location]) => ({ keyword, area, location }));
+    kwMsg.className = "notice"; kwMsg.textContent = "Adding…";
+    try { await state.backend.addKeywords(site.id, keywords); textarea.value = ""; render(); }
+    catch (err) { kwMsg.className = "notice error"; kwMsg.textContent = err.message; }
+  });
+
+  const kwList = h("ul", { class: "kw-list" }, d.keywords.map((k) => h("li", null,
+    h("span", null, h("span", { class: "mono" }, k.keyword), h("span", { class: "muted" }, ` · ${k.area || "no area"} · ${k.location}`)),
+    h("button", { class: "link-btn", type: "button", onclick: async (e) => {
+      try { await state.backend.deleteKeyword(k.id); render(); } catch (err) { e.target.textContent = err.message; }
+    } }, "Remove"))));
+
+  const del = h("button", { class: "btn danger", type: "button", onclick: async () => {
+    if (del.dataset.armed !== "1") { del.dataset.armed = "1"; del.textContent = `Yes, delete ${site.name} and its history`; return; }
+    try { await state.backend.deleteSite(site.id); go({ name: "overview" }); } catch (err) { del.textContent = err.message; }
+  } }, "Delete website");
+
+  const conn = d.configured || {};
+  const connRow = (ok, name, what) => h("li", null, h("span", null, name, h("span", { class: "muted" }, ` · ${what}`)), h("span", { class: `pill ${ok ? "good" : "warning"}` }, ok ? "Connected" : "Not set up"));
+
+  return h("details", { class: "settings band", id: "settings" },
+    h("summary", null, "Settings"),
+    h("div", { style: "display:grid;gap:16px;margin-top:12px" },
+      site.last_sync_error ? h("div", { class: "panel notice error", style: "white-space:pre-wrap" }, `Last sync problems:\n${site.last_sync_error}`) : null,
+      h("div", { class: "panel" }, h("h3", { style: "margin-bottom:8px" }, "Data sources"),
+        h("ul", { class: "kw-list" },
+          connRow(conn.cloudflare, "Cloudflare", "visitors and speed"),
+          connRow(conn.searchConsole, "Google Search Console", "clicks, searches, pages, sitemaps"),
+          connRow(conn.rankTracking, "DataForSEO", "local Google and Maps positions"))),
+      h("div", { class: "panel" }, h("h3", { style: "margin-bottom:12px" }, "Website details"),
+        siteForm(site, async (data) => { await state.backend.updateSite(site.id, data); render(); })),
+      h("div", { class: "panel", style: "display:grid;gap:12px" }, h("h3", null, `Tracked keywords (${d.keywords.length})`), kwList, addKw),
+      h("div", null, del)));
+}
+
+/* ---------------- boot ---------------- */
+
+function showBanner(text) {
+  const b = document.getElementById("banner");
+  b.textContent = text;
+  b.hidden = !text;
+}
+
+async function boot() {
+  setRangeButtons();
+  const chip = document.getElementById("mode-chip");
+  let live = false;
+  try {
+    const res = await fetch("api/status", { headers: { accept: "application/json" } });
+    live = res.ok && (res.headers.get("content-type") || "").includes("application/json");
+  } catch {}
+  state.backend = live ? liveBackend : makeDemoBackend();
+  chip.textContent = live ? "Live" : "Example data";
+  chip.className = `chip ${live ? "live" : "demo"}`;
+  if (!live) showBanner("You're looking at example data. Deploy the worker and connect Cloudflare, Search Console and DataForSEO to see your own websites.");
+  const m = location.hash.match(/^#site-(\d+)$/);
+  state.view = m ? { name: "site", id: Number(m[1]) } : { name: "overview" };
+  render();
+}
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# Copy to .dev.vars for local development. In production set each one with
+#   npx wrangler secret put NAME
+
+# Password for the dashboard (any username works in the browser prompt)
+DASHBOARD_PASSWORD=change-me
+
+# Cloudflare API token with "Account Analytics: Read" (and "Zone Analytics: Read"
+# if you use zone IDs instead of Web Analytics site tags)
+CF_API_TOKEN=
+CF_ACCOUNT_ID=
+
+# Google service account key (the whole JSON file on one line). Add the service
+# account's email as a user on each Search Console property.
+GOOGLE_SERVICE_ACCOUNT_JSON=
+
+# DataForSEO API login (https://app.dataforseo.com/api-access)
+DATAFORSEO_LOGIN=
+DATAFORSEO_PASSWORD=
+
+# Random string that DataForSEO sends back with each result
+WEBHOOK_SECRET=

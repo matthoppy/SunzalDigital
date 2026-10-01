@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sunzal-seo-dashboard",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+
+  // The dashboard UI. run_worker_first keeps it behind the password check.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "seo-dashboard",
+      // Replace with the id printed by `npx wrangler d1 create seo-dashboard`
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "triggers": {
+    "crons": [
+      "*/10 * * * *", // uptime checks for every site
+      "20 * * * *"    // daily data sync, a few sites per run
+    ]
+  },
+
+  "vars": {
+    // Public URL of this worker, used for DataForSEO result callbacks,
+    // e.g. "https://sunzal-seo-dashboard.<you>.workers.dev"
+    "PUBLIC_URL": "",
+    "SITES_PER_RUN": "2",
+    "PAGE_CHECKS_PER_SITE": "5",
+    "RANK_CHECK_INTERVAL_DAYS": "1",
+    "RANK_DEPTH": "30",
+    "RANK_LANGUAGE_CODE": "en"
+  }
+}
