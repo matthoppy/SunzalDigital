@@ -42,8 +42,9 @@ plan's limit of 50 per run. Hourly runs cover 24 sites a day. On Workers Paid ($
 
 ## Setup
 
-1. Create the database. In [Supabase](https://supabase.com/dashboard), create a project (the free plan
-   is fine), then run `supabase/migrations/20261001000000_seo_dashboard.sql` in the SQL editor, or with
+1. Create the database. **Already done:** the project "Sunzal SEO" (Sydney region, closest to NZ) has
+   the schema applied and `SUPABASE_URL` is set. To set up a fresh one elsewhere: in
+   [Supabase](https://supabase.com/dashboard), create a project (the free plan is fine), then run `supabase/migrations/20261001000000_seo_dashboard.sql` in the SQL editor, or with
    the Supabase CLI:
 
    ```sh

@@ -19,8 +19,8 @@
   },
 
   "vars": {
-    // Your Supabase project URL, e.g. "https://abcdefghijkl.supabase.co"
-    "SUPABASE_URL": "",
+    // Supabase project "Sunzal SEO" (Sydney, ap-southeast-2)
+    "SUPABASE_URL": "https://mydmucnnofycfigjlbqm.supabase.co",
     // Public URL of this worker, used for DataForSEO result callbacks,
     // e.g. "https://sunzal-seo-dashboard.<you>.workers.dev"
     "PUBLIC_URL": "",
